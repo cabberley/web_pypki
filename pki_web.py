@@ -25,8 +25,8 @@ import core.users
 #===============================================================================
 
 # SSL
-CherryPyWSGIServer.ssl_certificate = "pkiweb.crt"
-CherryPyWSGIServer.ssl_private_key = "pkiweb.key"
+WSGIServer.ssl_certificate = "pkiweb.crt"
+WSGIServer.ssl_private_key = "pkiweb.key"
 
 # Declare URLs we will serve files for
 urls = ('/', 'Home',

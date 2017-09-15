@@ -4,8 +4,15 @@
 
 Follow instructions in Establish multi-level OpenSSL Public Key Infrastructure  Assumptions: 
 -  pki user exists 
--  pki homedirectory is in /home/pki 
--  pki root is in /home/pki/pki-root 
+-  pki root is in /pkiroot 
+
+## Ensure the required OS packages are present
+
+### RedHat based systems
+```bash
+yum update
+yum install -y epel-release python python-devel python-pip python-webpy libffi-devel openssl openssl-devel git gcc
+```
 
 ## Install pyPKI 
 Clone GIT into directory:
@@ -19,7 +26,8 @@ git clone https://dverslegers@bitbucket.org/dverslegers/pypki.git
 
 Install pyPKI and it’s dependencies: 
 ```bash
-pip install pypki
+cd /home/pki
+pip install ./pypki --no-use-wheel
 ```
 
 > Make sure pip is available on your system. If this is not yet the case you can add it by issuing sudo apt-get install python-pip 
@@ -36,7 +44,9 @@ pyPKI only requires very little configuration parameters to work:
 > Make sure the names correspond to the names of the CA sections in the openssl.cnf file. 
 
 These configuration parameters should be set in pypki/config/pki.cfg 
-In addition pyPKI requires the addition of three parameters for each CA in the openssl.cnf file. These options determine wether or not to use smartcards, if so which slot to use on the smartcard and the location of the certificate authority chain file (see Establish multi-level OpenSSL Public Key Infrastructure doc). Therefore make the following changes to each CA section in the openssl.cnf file: 
+In addition pyPKI requires the addition of three parameters for each CA in the openssl.cnf file. These options determine wether or not to use smartcards, if so which slot to use on the smartcard and the location of the certificate authority chain file (see Establish multi-level OpenSSL Public Key Infrastructure doc).
+
+Therefore make the following changes to each CA section in the openssl.cnf file: 
 
 ```bash
 # Section for pyPKI  
