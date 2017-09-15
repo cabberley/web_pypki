@@ -3,14 +3,9 @@ __author__ = 'dennisverslegers'
 from datetime import date
 from validate import Validator
 from configobj import ConfigObj
-#from web.wsgiserver import CherryPyWSGIServer
+from web.wsgiserver import CherryPyWSGIServer
 from core.openssl_ca import run_cmd, run_cmd_pexpect, generate_password, opensslconfigfileparser, generate_certificate
 from core.forms import config_form, usercert_form, servercert_form, bulkcert_form, revoke_form, report_form
-
-try:
-    from cheroot.wsgi import Server as WSGIServer
-except ImportError:
-    from cherrypy.wsgiserver import CherryPyWSGIServer as WSGIServer
 
 import os
 import re
@@ -25,8 +20,8 @@ import core.users
 #===============================================================================
 
 # SSL
-WSGIServer.ssl_certificate = "pkiweb.crt"
-WSGIServer.ssl_private_key = "pkiweb.key"
+CherryPyWSGIServer.ssl_certificate = "pkiweb.crt"
+CherryPyWSGIServer.ssl_private_key = "pkiweb.key"
 
 # Declare URLs we will serve files for
 urls = ('/', 'Home',
