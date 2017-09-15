@@ -14,5 +14,6 @@ setup(
         "configobj",
         "pyyaml",
         "pexpect",
+        "pyopenssl"
     ],
 )
