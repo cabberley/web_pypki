@@ -30,7 +30,8 @@ urls = ('/', 'Home',
         '/login', 'Login',
         '/progress', 'Progress')
 
-render = web.template.render('templates/')
+template_root = os.path.join(os.path.dirname(__file__), 'templates/')
+render = web.template.render(template_root)
 app = web.application(urls, globals()).wsgifunc()
 
 # Load configuration
@@ -187,7 +188,6 @@ class Login(object):
 
 class Home(object):
     def GET(self):
-        print('Here I AM')
         if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             return render.home(version)
 
