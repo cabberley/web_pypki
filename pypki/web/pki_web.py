@@ -31,7 +31,7 @@ urls = ('/', 'Home',
         '/progress', 'Progress')
 
 render = web.template.render('templates/')
-app = web.application(urls, globals())
+app = web.application(urls, globals()).wsgifunc()
 
 # Load configuration
 cfg_defaults = {
@@ -43,9 +43,6 @@ cfg_defaults = {
 }
 
 config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki'))
-print(config)
-print(type(config))
-print(config.pkiroot)
 
 ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
