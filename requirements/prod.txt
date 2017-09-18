@@ -1,0 +1,6 @@
+apiwrapper
+web.py>=0.37
+configobj
+pyyaml
+pexpect
+layeredconfig

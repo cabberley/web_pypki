@@ -10,8 +10,10 @@ Follow instructions in Establish multi-level OpenSSL Public Key Infrastructure  
 
 ### RedHat based systems
 ```bash
-yum update
-yum install -y epel-release python python-devel python-pip python-webpy libffi-devel openssl openssl-devel git gcc
+yum update -y
+yum install -y epel-release 
+#yum install -y python python-devel python-pip python-webpy libffi-devel openssl openssl-devel git gcc
+yum install -y python python-devel python-pip python-webpy git gcc
 ```
 
 ## Install pyPKI 
@@ -19,7 +21,7 @@ Clone GIT into directory:
 
 ```bash
 cd /home/pki
-git clone https://dverslegers@bitbucket.org/dverslegers/pypki.git
+git clone -b release/Release_1.1 https://dverslegers@bitbucket.org/dverslegers/pypki.git
 ```
 
 > Make sure the git utility is available on the system before attempting to use this command. 

@@ -1,11 +1,7 @@
-__author__ = 'dennisverslegers'
-
 from datetime import date
-from validate import Validator
-from configobj import ConfigObj
-from web.wsgiserver import CherryPyWSGIServer
-from core.openssl_ca import run_cmd, run_cmd_pexpect, generate_password, opensslconfigfileparser, generate_certificate
-from core.forms import config_form, usercert_form, servercert_form, bulkcert_form, revoke_form, report_form
+from layeredconfig import LayeredConfig, Defaults, Environment
+from pypki.core.openssl_ca import run_cmd, run_cmd_pexpect, generate_password, opensslconfigfileparser, generate_certificate
+from pypki.core.forms import config_form, usercert_form, servercert_form, bulkcert_form, revoke_form, report_form
 
 import os
 import re
@@ -13,15 +9,12 @@ import sys
 import web
 import time
 import base64
-import core.users
+import pkg_resources
+import pypki.core.users
 
 #===============================================================================
 #  Init, things we cannot live without
 #===============================================================================
-
-# SSL
-CherryPyWSGIServer.ssl_certificate = "pkiweb.crt"
-CherryPyWSGIServer.ssl_private_key = "pkiweb.key"
 
 # Declare URLs we will serve files for
 urls = ('/', 'Home',
@@ -40,28 +33,25 @@ urls = ('/', 'Home',
 render = web.template.render('templates/')
 app = web.application(urls, globals())
 
-# Read configuration file
-configfile = ConfigObj('./config/pki.cfg', configspec='./config/pkispec.cfg')
+# Load configuration
+cfg_defaults = {
+    'pkiroot': '/pkiroot',
+    'opensslconfigfile': '/pkiroot/openssl.cnf',
+    'canames': ['RootCA', 'IntermCA'],
+    'cwdir': os.getcwd(),
+    'download_dir': './static'
+}
 
-# Validate configuration file
-validator = Validator()
-valid = configfile.validate(validator)
+config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki'))
+print(config)
+print(type(config))
+print(config.pkiroot)
 
-# Exit in case of troubles
-if not valid:
-    raise Exception('Config file validation failed, exiting application', configfile, validator)
-    sys.exit(1)
-
-config = {'pkiroot': configfile['pkiroot'],
-          'opensslconfigfile': configfile['opensslconfigfile'],
-          'canames': configfile['canames'],
-          'cwdir': os.getcwd(),
-          'download_dir': './static'}
-
-ca_list, defaultcsr = opensslconfigfileparser(config['opensslconfigfile'], config['canames'])
+ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
 bulk_progress = 0
-version = '1.0'
+version = '1.0.1'
+
 #===============================================================================
 #  Functions required for the web interface to work
 #===============================================================================
@@ -166,12 +156,12 @@ def csv_to_csr_data(csv, cert_type='Server'):
 
 
 def authentication():
-    if web.ctx.path != '/login':
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+    if pypki.web.ctx.path != '/login':
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             pass
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 #===============================================================================
@@ -181,80 +171,60 @@ def authentication():
 
 class Login(object):
     def GET(self):
-        auth = web.ctx.env.get('HTTP_AUTHORIZATION')
+        auth = pypki.web.ctx.env.get('HTTP_AUTHORIZATION')
         authreq = False
         if auth is None:
             authreq = True
         else:
             auth = re.sub('^Basic ', '', auth)
             username,password = base64.decodestring(auth).split(':')
-            if (username, password) in core.users.allowed:
-                raise web.seeother('/home')
+            if (username, password) in pypki.core.users.allowed:
+                raise pypki.web.seeother('/home')
             else:
                 authreq = True
         if authreq:
-            web.header('WWW-Authenticate','Basic realm="PKIweb authentication"')
-            web.ctx.status = '401 Unauthorized'
+            pypki.web.header('WWW-Authenticate', 'Basic realm="PKIweb authentication"')
+            pypki.web.ctx.status = '401 Unauthorized'
             return
 
 
 class Home(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             return render.home(version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Config(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = config_form()
 
             # Set current values on form
-            form.pkiroot.value = config['pkiroot']
-            form.opensslconfigfile.value = config['opensslconfigfile']
-            form.canames.value = ','.join(config['canames'])
+            form.pkiroot.value = config.pkiroot
+            form.opensslconfigfile.value = config.opensslconfigfile
+            form.canames.value = ','.join(config.canames)
 
             return render.configuration(form, version)
 
         else:
-            raise web.seeother('/login')
-
-    def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
-            form = config_form()
-
-            if not form.validates():
-                return render.configuration(form, version)
-
-            # Update configuration
-            config['pkiroot'] = configfile['pkiroot'] = form.pkiroot.value
-            config['opensslconfigfile'] = configfile['opensslconfigfile'] = form.opensslconfigfile.value
-            config['canames'] = configfile['canames'] = form.canames.value.split(',')
-
-            # Write configuration to disk
-            configfile.write()
-
-            return render.configuration(form, version)
-
-        else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class GenerateCertificate(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             return render.generatecertificate(version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class ClientCertificate(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = usercert_form()
 
             # Set values based on default CSR
@@ -269,12 +239,12 @@ class ClientCertificate(object):
             return render.form(form)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
     def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = usercert_form()
-            data = web.input()
+            data = pypki.web.input()
 
             if not form.validates():
                 # Set values based on default CSR
@@ -313,12 +283,12 @@ class ClientCertificate(object):
             return render.download(crt_list, zipfile, password, version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class ServerCertificate(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = servercert_form()
 
             # Set values based on default CSR
@@ -333,12 +303,12 @@ class ServerCertificate(object):
             return render.form(form)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
     def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = servercert_form()
-            data = web.input()
+            data = pypki.web.input()
 
             if not form.validates():
                 # Set values based on default CSR
@@ -376,12 +346,12 @@ class ServerCertificate(object):
             return render.download(crt_list, zipfile, password, version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Bulk(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             form = bulkcert_form()
 
             # Set values of CA's
@@ -390,13 +360,13 @@ class Bulk(object):
             return render.form(form)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
     def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             global bulk_progress
             form = bulkcert_form()
-            data = web.input()
+            data = pypki.web.input()
 
             if not form.validates():
                 # Set values of CA's
@@ -426,32 +396,32 @@ class Bulk(object):
             return render.download(crt_list, zipfile, password, version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Revoke(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
-            if not web.input():
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+            if not pypki.web.input():
                 # Initial request
                 form = revoke_form()
                 form.selected_ca.args = ['', ] + [ca.name for ca in ca_list]
 
                 return render.revoke(form, version)
 
-            if web.input()['request'] == 'getlist':
-                ca = [c for c in ca_list if c.name == web.input()['ca']][0]
+            if pypki.web.input()['request'] == 'getlist':
+                ca = [c for c in ca_list if c.name == pypki.web.input()['ca']][0]
                 cert_list = ca.list_db()
                 rev_list = [cert for cert in cert_list if cert['status'] == 'V']
                 return render.revoke_list(rev_list)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
     def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
 
-            data = web.input()
+            data = pypki.web.input()
             form = revoke_form()
 
             if not form.validates():
@@ -459,7 +429,7 @@ class Revoke(object):
                 return render.revoke(form, version)
 
             # Decide on CA
-            ca = [c for c in ca_list if c.name == web.input()['selected_ca']][0]
+            ca = [c for c in ca_list if c.name == pypki.web.input()['selected_ca']][0]
 
             for key, value in data.iteritems():
                 if value == 'R':
@@ -473,18 +443,18 @@ class Revoke(object):
             return render.revoke(form, version)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Crl(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             # Decide on CA to generate CRL for
-            ca = [c for c in ca_list if c.name == web.input()['ca']][0]
+            ca = [c for c in ca_list if c.name == pypki.web.input()['ca']][0]
 
             # Generate CRL and get output
             try:
-                crl_pem, crl_txt = ca.generate_crl(web.input()['password'])
+                crl_pem, crl_txt = ca.generate_crl(pypki.web.input()['password'])
             except Exception as e:
                 return render.error(e, version)
 
@@ -493,33 +463,33 @@ class Crl(object):
             crl = prepare_files_for_download(file_list)
 
             # Serve zip file for download
-            web.redirect(crl)
+            pypki.web.redirect(crl)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Report(object):
     def GET(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
-            if not web.input():
+        if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
+            if not pypki.web.input():
                 # Initial request
                 form = report_form()
                 form.selected_ca.args = ['', ] + [ca.name for ca in ca_list]
 
                 return render.report(form, version)
 
-            if web.input()['request'] == 'getlist':
-                report = report_certificates_to_expire(ca_list, web.input()['ca'], web.input()['period'])
+            if pypki.web.input()['request'] == 'getlist':
+                report = report_certificates_to_expire(ca_list, pypki.web.input()['ca'], pypki.web.input()['period'])
                 return render.report_list(report)
 
         else:
-            raise web.seeother('/login')
+            raise pypki.web.seeother('/login')
 
 
 class Progress(object):
     def GET(self):
-        if web.input():
+        if pypki.web.input():
             return bulk_progress
 
 #===============================================================================
@@ -528,10 +498,10 @@ class Progress(object):
 
 
 def main():
-    web.config.debug = False
+    pypki.web.config.debug = False
     # Start the web application
-    web.internalerror = web.debugerror
-    app.add_processor(web.loadhook(authentication))
+    pypki.web.internalerror = pypki.web.debugerror
+    app.add_processor(pypki.web.loadhook(authentication))
     app.run()
 
 if __name__ == '__main__':
