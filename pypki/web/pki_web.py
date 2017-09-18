@@ -190,6 +190,7 @@ class Login(object):
 
 class Home(object):
     def GET(self):
+        print('Here I AM')
         if pypki.web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
             return render.home(version)
 
