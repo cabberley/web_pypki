@@ -83,7 +83,7 @@ Let us create the OpenSSL file and place it in our root PKI directory (/home/pki
 default_ca                      = CA # The default ca section 
 
 [ RootCA ]   
-dir                             = ./CA                # Where everything is kept 
+dir                             = /pkiroot/CA                # Where everything is kept 
 certificate                     = $dir/ca.crt             # The CA certificate
 private_key                     = $dir/ca.key             # The private key 
 RANDFILE                        = $dir/ca.db.rand         # private random number file  name_opt   = ca_default
@@ -114,7 +114,7 @@ As a next step we need to introduce a CA configuration section for each of the C
 default_ca                      = IntermCA # The default ca section 
 
 [ RootCA ]   
-dir                             = ./RootCA                # Where everything is kept 
+dir                             = /pkiroot/RootCA                # Where everything is kept 
 certificate                     = $dir/RootCA.crt             # The CA certificate
 private_key                     = $dir/RootCA.key             # The private key 
 RANDFILE                        = $dir/ca.db.rand         # private random number file  name_opt   = ca_default
@@ -135,7 +135,7 @@ preserve                        = no                      # keep passed DN order
 policy                          = policy_match
 
 [ IntermCA ]   
-dir                             = ./IntermCA                # Where everything is kept 
+dir                             = /pkiroot/IntermCA                # Where everything is kept 
 certificate                     = $dir/IntermCA.crt             # The CA certificate
 private_key                     = $dir/IntermCA.key             # The private key 
 RANDFILE                        = $dir/ca.db.rand         # private random number file  name_opt   = ca_default

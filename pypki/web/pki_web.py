@@ -43,7 +43,7 @@ cfg_defaults = {
     'download_dir': './static'
 }
 
-config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki'))
+config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki_'))
 
 ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
