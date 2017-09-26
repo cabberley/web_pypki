@@ -1,4 +1,6 @@
 FROM centos:latest
+MAINTAINER dv@arkeon.eu
+LABEL pypki
 
 # Install required OS packages
 RUN echo "Installing OS packages"
@@ -29,12 +31,12 @@ RUN mkdir -p /usr/share/nginx/html/pkiweb
 RUN cp -R /home/pki/pypki/static /usr/share/nginx/html/pkiweb
 RUN echo "Setting up wsgi"
 RUN mkdir -p /etc/uwsgi/sites
-ADD pypki.wsgi.ini /etc/uwsgi/sites
-ADD nginx.conf /etc/nginx
+ADD sysfiles/pypki.wsgi.ini /etc/uwsgi/sites
+ADD sysfiles/nginx.conf /etc/nginx
 
 # Expose services and enable
 EXPOSE 9443
-ADD supervisord.conf /etc/supervisord.conf
+ADD sysfiles/supervisord.conf /etc/supervisord.conf
 #CMD /usr/sbin/uwsgi --emperor /etc/uwsgi/sites & \
 #    /bin/bash
 #CMD /usr/sbin/uwsgi --emperor /etc/uwsgi/sites & \
