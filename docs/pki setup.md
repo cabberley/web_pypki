@@ -420,24 +420,24 @@ Create Intermediate CA public / private keypair
 
 ```bash
 mkdir -p ./RootCA/RootCA.db.certs/IntermCA 
-openssl genrsa -des3 -out ./RootCA/RootCA.db.certs/IntermCA/IntermCA.key 2048
+openssl genrsa -des3 -out ./RootCA/ca.db.certs/IntermCA/IntermCA.key 2048
 ```
 
 Generate Certificate Siging Request for intermediary CA. Don’t forget to modify the validity to an appropriate value. 
 ```bash
-openssl req -new -days 1095 -key ./RootCA/RootCA.db.certs/IntermCA/IntermCA.key -out ./RootCA/RootCA.db.certs/IntermCA/IntermCA.csr -config openssl.cnf
+openssl req -new -days 1095 -key ./RootCA/ca.db.certs/IntermCA/IntermCA.key -out ./RootCA/ca.db.certs/IntermCA/IntermCA.csr -config openssl.cnf
 ```
 
 Sign the previously generated CSR using the RootCA while adding the CA extension to ensure that the resulting certificate can be used to sign other certificates. 
 
 ```bash 
-openssl ca -config openssl.cnf -name RootCA -extensions v3_ca -out ./RootCA/RootCA.db.certs/IntermCA/IntermCA.crt -infiles ./RootCA/RootCA.db.certs/IntermCA/IntermCA.csr
+openssl ca -config openssl.cnf -name RootCA -extensions v3_ca -out ./RootCA/ca.db.certs/IntermCA/IntermCA.crt -infiles ./RootCA/ca.db.certs/IntermCA/IntermCA.csr
 ```
  
 Now copy over the relevant certificate and key to the IntermCA root.
 
 ```bash
-cp ./RootCA/RootCA.db.certs/IntermCA/IntermCA.crt ./RootCA/RootCA.db.certs/IntermCA/IntermCA.key ./IntermCA/ 
+cp ./RootCA/ca.db.certs/IntermCA/IntermCA.crt ./RootCA/ca.db.certs/IntermCA/IntermCA.key ./IntermCA/ 
 ```
 
 It’s recommended to create a certificate chain file for future use. This file can be imported by a client and will indicate the full chain of Certification Authorities linked to the provided certificate. 

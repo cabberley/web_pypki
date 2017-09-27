@@ -45,13 +45,13 @@ Users with access to pyPKI are stored in pypki/core/users.py. You can edit this 
 
 ### Generate new server certificate 
 pyPKI uses SSL to secure communications between the browser and the application. You should generate a certfiicate for the pkiweb
-application and copy the generated certificates to /home/pki:
+application and copy the generated certificates to /pkiroot/ssl/pypki.crt and /pkiroot/ssl/pypki.key.
 
 ```bash
 openssl req -newkey rsa:2048 -keyout /pkiroot/IntermCA/ca.db.certs/pkiweb.test.local.key -nodes -config openssl.cnf -out /pkiroot/IntermCA/ca.db.certs/pkiweb.test.local.csr 
 openssl ca -config openssl.cnf -name IntermCA -out /pkiroot/IntermCA/ca.db.certs/pkiweb.test.local.crt -infiles /pkiroot/IntermCA/ca.db.certs/pkiweb.test.local.csr
 
-cp /pkiroot/IntermCA/ca.db.certs/{pkiweb.test.local.crt, pkiweb.test.local.key} /home/pki
+cp /pkiroot/IntermCA/ca.db.certs/{pkiweb.test.local.crt, pkiweb.test.local.key} /pkiroot/ssl
 ```
 
 ## Install pyPKI
