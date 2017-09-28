@@ -79,12 +79,12 @@ def prepare_crt_for_download(crt_list):
         zip_contents.append(crt.crtfile)
 
     # Create encrypted zip
-    zipfile = os.path.join(config.download_dir, 'crt_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    filename = 'crt_{date_time}.zip'.format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, filename)
     password = generate_password(12)
     create_zip(zip_contents, zipfile, encrypt=True, password=password)
 
-    #return zipfile
-    return os.path.join('/static/', 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S")), password
+    return os.path.join('/static/', filename), password
 
 
 def prepare_files_for_download(file_list):
@@ -95,11 +95,11 @@ def prepare_files_for_download(file_list):
         zip_contents.append(file)
 
     # Create zip file
-    zipfile = os.path.join(config.download_dir, 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    filename = 'crl_{date_time}.zip'.format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, filename)
     create_zip(zip_contents, zipfile)
 
-    #return zipfile
-    return os.path.join('/static/', 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    return os.path.join('/static/', filename)
 
 
 def report_certificates_to_expire(calist, caname, period):
