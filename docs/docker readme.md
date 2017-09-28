@@ -26,3 +26,10 @@ docker build -t pypki .
 docker run -d -v /pkiroot:/local_pkiroot_dir -p 443:9443 --name mypkidocker pypki
 ```
 
+## Configuration
+The pkiweb interface allows you to configure the following settings by using environment variables:
+- pypki_pkiroot defaults to: /pkiroot
+- pypki_opensslconfigfile defaults to: /pkiroot/openssl.cnf
+- pypki_canames defaults to: 'RootCA', 'IntermCA'
+
+

@@ -38,7 +38,7 @@ app = web.application(urls, globals()).wsgifunc()
 cfg_defaults = {
     'pkiroot': '/pkiroot',
     'opensslconfigfile': '/pkiroot/openssl.cnf',
-    'canames': ['RootCA', 'IntermCA'],
+    'canames': ['Test', 'IntermCA'],
     'cwdir': os.getcwd(),
     'download_dir': './static'
 }

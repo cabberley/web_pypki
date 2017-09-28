@@ -1,6 +1,5 @@
 FROM centos:latest
 MAINTAINER dv@arkeon.eu
-LABEL pypki
 
 # Install required OS packages
 RUN echo "Installing OS packages"
@@ -42,5 +41,5 @@ ADD sysfiles/supervisord.conf /etc/supervisord.conf
 #CMD /usr/sbin/uwsgi --emperor /etc/uwsgi/sites & \
 #    /usr/sbin/nginx & \
 #    /bin/bash
-CMD /usr/bin/supervisord -c /etc/supervisord.conf
-#CMD /bin/bash
+#CMD /usr/bin/supervisord -c /etc/supervisord.conf
+CMD /bin/bash
