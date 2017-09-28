@@ -10,6 +10,7 @@ The pkiweb interface allows you to configure the following settings by using env
 - PYPKI_OPENSSLCONFIGFILE defaults to: /pkiroot/openssl.cnf
 - PYPKI_CANAMES defaults to: 'RootCA', 'IntermCA'
 - PYPKI_DEBUG default to: False
+- PYPKI_DOWNLOAD_DIR default to: './static'
 
 ## Step 1: Prepare OS
 

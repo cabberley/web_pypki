@@ -43,14 +43,10 @@ cfg_defaults = {
     'download_dir': './static'
 }
 
-config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki_'))
+config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='PYPKI_'))
 
 print("Loaded the following configuration:")
 print(config)
-print("Environment vars are:")
-sys.stdout.write(repr(os.getenv('PYPKI_PKIROOT')))
-sys.stdout.write(repr(os.getenv('PYPKI_OPENSSLCONFIGFILE')))
-sys.stdout.write(repr(os.getenv('PYPKI_CANAMES')))
 
 ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
@@ -83,11 +79,12 @@ def prepare_crt_for_download(crt_list):
         zip_contents.append(crt.crtfile)
 
     # Create encrypted zip
-    zipfile = os.path.join(config['download_dir'], 'crt_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, 'crt_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
     password = generate_password(12)
     create_zip(zip_contents, zipfile, encrypt=True, password=password)
 
-    return zipfile, password
+    #return zipfile
+    return os.path.join('/static/', 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S")), password
 
 
 def prepare_files_for_download(file_list):
@@ -98,10 +95,11 @@ def prepare_files_for_download(file_list):
         zip_contents.append(file)
 
     # Create zip file
-    zipfile = os.path.join(config['download_dir'], 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
     create_zip(zip_contents, zipfile)
 
-    return zipfile
+    #return zipfile
+    return os.path.join('/static/', 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
 
 
 def report_certificates_to_expire(calist, caname, period):
