@@ -6,9 +6,10 @@ Note: this installation guide assumes that:
 - by default our configuration assumes that you have created the PKI structure in the /pkiroot folder
 
 The pkiweb interface allows you to configure the following settings by using environment variables:
-- pypki_pkiroot defaults to: /pkiroot
-- pypki_opensslconfigfile defaults to: /pkiroot/openssl.cnf
-- pypki_canames defaults to: 'RootCA', 'IntermCA'
+- PYPKI_PKIROOT defaults to: /pkiroot
+- PYPKI_OPENSSLCONFIGFILE defaults to: /pkiroot/openssl.cnf
+- PYPKI_CANAMES defaults to: 'RootCA', 'IntermCA'
+- PYPKI_DEBUG default to: False
 
 ## Step 1: Prepare OS
 

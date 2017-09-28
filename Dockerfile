@@ -1,6 +1,7 @@
 FROM centos:latest
 MAINTAINER dv@arkeon.eu
 
+
 # Install required OS packages
 RUN echo "Installing OS packages"
 RUN yum update -y

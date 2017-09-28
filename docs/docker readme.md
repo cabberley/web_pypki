@@ -1,7 +1,15 @@
 # Docker image creation 
  
 ## Prepare pkiroot volume
-Prepare the pkiroot volume based on the instructions provided in the *"pki setup"* doc.
+Prepare the pkiroot volume based on the instructions provided in the *"pki setup"* doc. Make sure to add for each CA the following
+section to your openssl.cnf file
+
+```bash
+# Section for pyPKI  
+use_smartcard = False  
+smartcard_slot = 0:2  
+chain_file = $dir/ca_chain.crt 
+```
 
 ## Generate new server certificate 
 pyPKI uses SSL to secure communications between the browser and the application. You should generate a certfiicate for the pkiweb
@@ -28,8 +36,9 @@ docker run -d -v /pkiroot:/local_pkiroot_dir -p 443:9443 --name mypkidocker pypk
 
 ## Configuration
 The pkiweb interface allows you to configure the following settings by using environment variables:
-- pypki_pkiroot defaults to: /pkiroot
-- pypki_opensslconfigfile defaults to: /pkiroot/openssl.cnf
-- pypki_canames defaults to: 'RootCA', 'IntermCA'
+- PYPKI_PKIROOT defaults to: /pkiroot
+- PYPKI_OPENSSLCONFIGFILE defaults to: /pkiroot/openssl.cnf
+- PYPKI_CANAMES defaults to: 'RootCA', 'IntermCA'
+- PYPKI_DEBUG default to: False
 
 
