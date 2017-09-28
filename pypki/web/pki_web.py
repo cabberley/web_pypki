@@ -45,6 +45,13 @@ cfg_defaults = {
 
 config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='pypki_'))
 
+print("Loaded the following configuration:")
+print(config)
+print("Environment vars are:")
+sys.stdout.write(repr(os.getenv('PYPKI_PKIROOT')))
+sys.stdout.write(repr(os.getenv('PYPKI_OPENSSLCONFIGFILE')))
+sys.stdout.write(repr(os.getenv('PYPKI_CANAMES')))
+
 ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
 bulk_progress = 0

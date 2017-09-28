@@ -34,6 +34,8 @@ RUN mkdir -p /etc/uwsgi/sites
 ADD sysfiles/pypki.wsgi.ini /etc/uwsgi/sites
 ADD sysfiles/nginx.conf /etc/nginx
 
+ADD sysfiles/printenv.py /tmp
+
 # Expose services and enable
 EXPOSE 9443
 ADD sysfiles/supervisord.conf /etc/supervisord.conf
