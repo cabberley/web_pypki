@@ -35,6 +35,8 @@ RUN echo "Setting up wsgi"
 RUN mkdir -p /etc/uwsgi/sites
 ADD sysfiles/pypki.wsgi.ini /etc/uwsgi/sites
 ADD sysfiles/nginx.conf /etc/nginx
+RUN echo "Setting env vars"
+ENV PYPKI_DOWNLOAD_DIR /usr/share/nginx/html/pkiweb/static
 
 # Expose services and enable
 EXPOSE 9443
