@@ -1,6 +1,7 @@
 apiwrapper
 web.py>=0.37
 configobj
-pyyaml
+ruamel.yaml
 pexpect
 layeredconfig
+six

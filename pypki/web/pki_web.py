@@ -8,6 +8,8 @@ import re
 import sys
 import web
 import time
+import ruamel.yaml as yaml
+import six
 import base64
 import pkg_resources
 import pypki.core.users
@@ -44,6 +46,14 @@ cfg_defaults = {
 }
 
 config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='PYPKI_'))
+
+csr_defaults_path = pkg_resources.resource_filename('pypki', 'config/csr_defaults.yaml')
+
+with open(csr_defaults_path) as stream:
+    try:
+        csr_defaults = yaml.load(stream, Loader=yaml.Loader)
+    except yaml.YAMLError as exc:
+        raise
 
 print("Loaded the following configuration:")
 print(config)
@@ -143,15 +153,19 @@ def csv_to_csr_data(csv, cert_type='Server'):
                         'organisationalunit': defaultcsr.organisationalunit}
 
         else:
-            csr_data = {'certtype': cert_type,
-                        'country': values[0],
-                        'state': values[1],
-                        'locality': values[2],
-                        'organisation': values[3],
-                        'organisationalunit': values[4],
-                        'commonname': values[5],
-                        'email': values[6],
-                        'validity': values[7] or 365}
+            csr_data = {
+                'certtype': cert_type,
+                'country': csr_defaults['country'] if isinstance(csr_defaults['country'], six.string_types) else values[csr_defaults['country']],
+                'state': csr_defaults['state'] if isinstance(csr_defaults['state'], six.string_types) else values[csr_defaults['state']],
+                'locality': csr_defaults['locality'] if isinstance(csr_defaults['locality'], six.string_types) else values[csr_default['locality']],
+                'organisation': csr_defaults['organisation'] if isinstance(csr_defaults['organisation'], six.string_types) else values[csr_defaults['organisation']],
+                'organisationalunit': csr_defaults['organisationalunit'] if isinstance(csr_defaults['organisationalunit'], six.string_types) else values[csr_defaults['organisationalunit']],
+                'commonname': csr_defaults['commonname'] if isinstance(csr_defaults['commonname'], six.string_types) else values[csr_defaults['commonname']],
+                'email': csr_defaults['email'] if isinstance(csr_defaults['email'], six.string_types) else values[csr_defaults['email']],
+                'validity': csr_defaults['validity'] if isinstance(csr_defaults['validity'], six.string_types) else values[csr_defaults['validity']]
+            }
+            if csr_defaults['request_id']:
+                csr_data['request_id'] = values[csr_defaults.request_id]
 
         csr_data_list.append(csr_data)
 
