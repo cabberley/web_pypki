@@ -1,0 +1,9 @@
+workspace.xml
+/pypki/core/__init__.pyc
+/pypki/core/openssl_ca.pyc
+/pypki/core/users.pyc
+/pypki/__init__.pyc
+/pypki/.DS_Store
+/.DS_Store
+/docs/.DS_Store
+/pypki/core/forms.pyc

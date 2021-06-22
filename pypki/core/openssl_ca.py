@@ -278,7 +278,7 @@ class CSR(object):
 
         if self.certtype == 'Server':
             # Add SAN attribute to certificate
-            # in order to make this work add the following line to your openssl.cnf file in the InntermCA section:
+            # in order to make this work add the following line to your openssl.cnf file in the IntermCA section:
             # copy_extensions = copy
             self.openssl_cfg_string += 'req_extensions = req_ext\n'\
                                        '[ req_ext ]\n' \

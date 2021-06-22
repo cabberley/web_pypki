@@ -1,27 +1,22 @@
-__author__ = 'dennisverslegers'
-
 from datetime import date
-from validate import Validator
-from configobj import ConfigObj
-from web.wsgiserver import CherryPyWSGIServer
-from core.openssl_ca import run_cmd, run_cmd_pexpect, generate_password, opensslconfigfileparser, generate_certificate
-from core.forms import config_form, usercert_form, servercert_form, bulkcert_form, revoke_form, report_form
+from layeredconfig import LayeredConfig, Defaults, Environment
+from pypki.core.openssl_ca import run_cmd, run_cmd_pexpect, generate_password, opensslconfigfileparser, generate_certificate
+from pypki.core.forms import config_form, usercert_form, servercert_form, bulkcert_form, revoke_form, report_form
 
 import os
 import re
 import sys
 import web
 import time
+import ruamel.yaml as yaml
+import six
 import base64
-import core.users
+import pkg_resources
+import pypki.core.users
 
 #===============================================================================
 #  Init, things we cannot live without
 #===============================================================================
-
-# SSL
-CherryPyWSGIServer.ssl_certificate = "pkiweb.crt"
-CherryPyWSGIServer.ssl_private_key = "pkiweb.key"
 
 # Declare URLs we will serve files for
 urls = ('/', 'Home',
@@ -37,31 +32,37 @@ urls = ('/', 'Home',
         '/login', 'Login',
         '/progress', 'Progress')
 
-render = web.template.render('templates/')
-app = web.application(urls, globals())
+template_root = os.path.join(os.path.dirname(__file__), 'templates/')
+render = web.template.render(template_root)
+app = web.application(urls, globals()).wsgifunc()
 
-# Read configuration file
-configfile = ConfigObj('./config/pki.cfg', configspec='./config/pkispec.cfg')
+# Load configuration
+cfg_defaults = {
+    'pkiroot': '/pkiroot',
+    'opensslconfigfile': '/pkiroot/openssl.cnf',
+    'canames': ['RootCA', 'IntermCA'],
+    'cwdir': os.getcwd(),
+    'download_dir': './static'
+}
 
-# Validate configuration file
-validator = Validator()
-valid = configfile.validate(validator)
+config = LayeredConfig(Defaults(cfg_defaults), Environment(prefix='PYPKI_'))
 
-# Exit in case of troubles
-if not valid:
-    raise Exception('Config file validation failed, exiting application', configfile, validator)
-    sys.exit(1)
+csr_defaults_path = pkg_resources.resource_filename('pypki', 'config/csr_defaults.yaml')
 
-config = {'pkiroot': configfile['pkiroot'],
-          'opensslconfigfile': configfile['opensslconfigfile'],
-          'canames': configfile['canames'],
-          'cwdir': os.getcwd(),
-          'download_dir': './static'}
+with open(csr_defaults_path) as stream:
+    try:
+        csr_defaults = yaml.load(stream, Loader=yaml.Loader)
+    except yaml.YAMLError as exc:
+        raise
 
-ca_list, defaultcsr = opensslconfigfileparser(config['opensslconfigfile'], config['canames'])
+print("Loaded the following configuration:")
+print(config)
+
+ca_list, defaultcsr = opensslconfigfileparser(config.opensslconfigfile, config.canames)
 
 bulk_progress = 0
-version = '1.0'
+version = '1.0.1'
+
 #===============================================================================
 #  Functions required for the web interface to work
 #===============================================================================
@@ -88,11 +89,12 @@ def prepare_crt_for_download(crt_list):
         zip_contents.append(crt.crtfile)
 
     # Create encrypted zip
-    zipfile = os.path.join(config['download_dir'], 'crt_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    filename = 'crt_{date_time}.zip'.format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, filename)
     password = generate_password(12)
     create_zip(zip_contents, zipfile, encrypt=True, password=password)
 
-    return zipfile, password
+    return os.path.join('/static/', filename), password
 
 
 def prepare_files_for_download(file_list):
@@ -103,10 +105,11 @@ def prepare_files_for_download(file_list):
         zip_contents.append(file)
 
     # Create zip file
-    zipfile = os.path.join(config['download_dir'], 'crl_{date_time}.zip').format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    filename = 'crl_{date_time}.zip'.format(date_time=time.strftime("%d_%m_%Y-%H%M%S"))
+    zipfile = os.path.join(config.download_dir, filename)
     create_zip(zip_contents, zipfile)
 
-    return zipfile
+    return os.path.join('/static/', filename)
 
 
 def report_certificates_to_expire(calist, caname, period):
@@ -150,15 +153,19 @@ def csv_to_csr_data(csv, cert_type='Server'):
                         'organisationalunit': defaultcsr.organisationalunit}
 
         else:
-            csr_data = {'certtype': cert_type,
-                        'country': values[0],
-                        'state': values[1],
-                        'locality': values[2],
-                        'organisation': values[3],
-                        'organisationalunit': values[4],
-                        'commonname': values[5],
-                        'email': values[6],
-                        'validity': values[7] or 365}
+            csr_data = {
+                'certtype': cert_type,
+                'country': csr_defaults['country'] if isinstance(csr_defaults['country'], six.string_types) else values[csr_defaults['country']],
+                'state': csr_defaults['state'] if isinstance(csr_defaults['state'], six.string_types) else values[csr_defaults['state']],
+                'locality': csr_defaults['locality'] if isinstance(csr_defaults['locality'], six.string_types) else values[csr_default['locality']],
+                'organisation': csr_defaults['organisation'] if isinstance(csr_defaults['organisation'], six.string_types) else values[csr_defaults['organisation']],
+                'organisationalunit': csr_defaults['organisationalunit'] if isinstance(csr_defaults['organisationalunit'], six.string_types) else values[csr_defaults['organisationalunit']],
+                'commonname': csr_defaults['commonname'] if isinstance(csr_defaults['commonname'], six.string_types) else values[csr_defaults['commonname']],
+                'email': csr_defaults['email'] if isinstance(csr_defaults['email'], six.string_types) else values[csr_defaults['email']],
+                'validity': csr_defaults['validity'] if isinstance(csr_defaults['validity'], six.string_types) else values[csr_defaults['validity']]
+            }
+            if csr_defaults['request_id']:
+                csr_data['request_id'] = values[csr_defaults.request_id]
 
         csr_data_list.append(csr_data)
 
@@ -188,12 +195,12 @@ class Login(object):
         else:
             auth = re.sub('^Basic ', '', auth)
             username,password = base64.decodestring(auth).split(':')
-            if (username, password) in core.users.allowed:
+            if (username, password) in pypki.core.users.allowed:
                 raise web.seeother('/home')
             else:
                 authreq = True
         if authreq:
-            web.header('WWW-Authenticate','Basic realm="PKIweb authentication"')
+            web.header('WWW-Authenticate', 'Basic realm="PKIweb authentication"')
             web.ctx.status = '401 Unauthorized'
             return
 
@@ -213,29 +220,9 @@ class Config(object):
             form = config_form()
 
             # Set current values on form
-            form.pkiroot.value = config['pkiroot']
-            form.opensslconfigfile.value = config['opensslconfigfile']
-            form.canames.value = ','.join(config['canames'])
-
-            return render.configuration(form, version)
-
-        else:
-            raise web.seeother('/login')
-
-    def POST(self):
-        if web.ctx.env.get('HTTP_AUTHORIZATION') is not None:
-            form = config_form()
-
-            if not form.validates():
-                return render.configuration(form, version)
-
-            # Update configuration
-            config['pkiroot'] = configfile['pkiroot'] = form.pkiroot.value
-            config['opensslconfigfile'] = configfile['opensslconfigfile'] = form.opensslconfigfile.value
-            config['canames'] = configfile['canames'] = form.canames.value.split(',')
-
-            # Write configuration to disk
-            configfile.write()
+            form.pkiroot.value = config.pkiroot
+            form.opensslconfigfile.value = config.opensslconfigfile
+            form.canames.value = ','.join(config.canames)
 
             return render.configuration(form, version)
 
